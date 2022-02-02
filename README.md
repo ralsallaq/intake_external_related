@@ -22,7 +22,7 @@ optional arguments:
                         csv file with seqname, tax_id, species_name titles
 ```
 
-As shown in the help menue above, it requires the first mapping file (input to the [[-i]] option) in specific format; it must have at least two columns: 
+As shown in the help menue above, it requires the first mapping file (input to the **-i** option) in specific format; it must have at least two columns: 
 
 *CompBio ID* and *alt_id1*
 
