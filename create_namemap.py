@@ -38,9 +38,6 @@ def main():
     data_dir = args.data_dir
     out_file = args.out_file
 
-#    if args.ha_name:
-#        projectName = args.ha_name
-#        projectNum=str(re.findall(r'\d+',projectName)[1])
  
     fastqFs = glob.glob(data_dir+"/**/*.f*q.gz",recursive = True) + glob.glob(data_dir+"/**/*.f*q",recursive = True)
 
@@ -48,14 +45,17 @@ def main():
     fastqs.columns = ['file']
     fastqs.loc[:,'FASTQ'] = fastqs['file'].apply(lambda r:os.path.basename(r).strip())
 
-    #### deduplicate
     print("found {} FASTQS \n".format(fastqs.shape[0]), file=sys.stderr)
 
+    #### deduplicate
     idx_duplicated = fastqs['FASTQ'].duplicated()
-    print("found {} duplicated FASTQ files \n".format(idx_duplicated.sum()), file=sys.stderr)
 
-    fastqs = fastqs.loc[~idx_duplicated]
-    print("{} FASTQS remained after removing duplicates \n".format(fastqs.shape[0]), file=sys.stderr)
+    if fastqs.loc[idx_duplicated].shape[0] > 0 :
+        print("found {} duplicated FASTQ files saved in duplicated_removed_fastqs.txt and then removed \n".format(idx_duplicated.sum()), file=sys.stderr)
+        fastqs.loc[idx_duplicated].to_csv("duplicated_removed_fastqs.txt", sep="\t", index=False)
+
+        fastqs = fastqs.loc[~idx_duplicated]
+        print("{} FASTQS remained after removing duplicates \n".format(fastqs.shape[0]), file=sys.stderr)
 
 
     #### sequence operation map file need to have the correct columns
@@ -75,14 +75,13 @@ def main():
         for j, row2 in df_res_op_map.iterrows():
             for iid in row2.index.drop('CompBio ID'):
                 if row2[iid] in row1['FASTQ']:
-                    #print(row1['FASTQ']," is assigned the CompBio ID ",row2['CompBio ID'], " based on the id ", row2[iid], file=sys.stderr)
                     return row2['CompBio ID']
 
     fastqs.loc[:,'CompBio ID'] = fastqs.apply(lambda r: getCompBioID(r), axis=1)
 
 
-    #namemap = fastqs.loc[~fastqs['CompBio ID'].isnull(), ['file','FASTQ','CompBio ID']]
-    namemap = fastqs.loc[~fastqs['CompBio ID'].isnull(), ['FASTQ','CompBio ID']]
+    namemap = fastqs.loc[~fastqs['CompBio ID'].isnull(), ['FASTQ','CompBio ID','file']]
+    #namemap = fastqs.loc[~fastqs['CompBio ID'].isnull(), ['FASTQ','CompBio ID']]
 
     namemap = namemap.sort_values(by='FASTQ')
 
